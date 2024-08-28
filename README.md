@@ -4,7 +4,6 @@ A module to bring Web Push support to [Electron](https://github.com/electron/ele
 
 ## Why and how ?
 
-See [this blog post](https://medium.com/@MatthieuLemoine/my-journey-to-bring-web-push-support-to-node-and-electron-ce70eea1c0b0).
 
 ## Install
 
@@ -33,7 +32,7 @@ import {
   NOTIFICATION_SERVICE_ERROR,
   NOTIFICATION_RECEIVED as ON_NOTIFICATION_RECEIVED,
   TOKEN_UPDATED,
-} from 'electron-push-receiver/src/constants';
+} from 'electron-push-receiver-v2/src/constants';
 
 // Listen for service successfully started
 ipcRenderer.on(NOTIFICATION_SERVICE_STARTED, (_, token) => // do something);
@@ -44,9 +43,15 @@ ipcRenderer.on(TOKEN_UPDATED, (_, token) => // Send token);
 // Display notification
 ipcRenderer.on(ON_NOTIFICATION_RECEIVED, (_, notification) => // display notification);
 // Start service
-ipcRenderer.send(START_NOTIFICATION_SERVICE, senderId);
+ipcRenderer.send(START_NOTIFICATION_SERVICE, {
+  firebase: {
+    apiKey: [YOUR_API_KEY],
+    appID: [YOUR_APP_ID],
+    projectID: [YOUR_PROJECT_ID]
+  }
+});
 ```
 
 ## Example
 
-Thanks to [CydeSwype](https://github.com/CydeSwype), you can find an example project [here](https://github.com/CydeSwype/electron-fcm-demo).
+.

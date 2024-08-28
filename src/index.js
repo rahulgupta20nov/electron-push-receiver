@@ -1,4 +1,4 @@
-const { register, listen } = require('push-receiver');
+const { register, listen } = require('push-receiver-v2');
 const { ipcMain } = require('electron');
 const Config = require('electron-config');
 const {
@@ -26,11 +26,24 @@ let started = false;
 // To be call from the main process
 function setup(webContents) {
   // Will be called by the renderer process
-  ipcMain.on(START_NOTIFICATION_SERVICE, async (_, senderId) => {
+  ipcMain.on(START_NOTIFICATION_SERVICE, async (_, {
+    firebase, 
+    firebase: {
+      apiKey = '',
+      appID = '',
+      projectID = ''
+    }} = {}) => {
     // Retrieve saved credentials
     let credentials = config.get('credentials');
     // Retrieve saved senderId
-    const savedSenderId = config.get('senderId');
+    const savedFCMStringifiedConfig = config.get('senderConfig') || '{}';
+    const {
+      firebase: {
+        apiKey: savedApiKey = '',
+        apiID: savedAppID = '',
+        projectID: savedProjectID = ''
+      } = {}
+    } = JSON.parse(savedFCMStringifiedConfig) || {};
     if (started) {
       webContents.send(NOTIFICATION_SERVICE_STARTED, (credentials.fcm || {}).token);
       return;
@@ -40,12 +53,12 @@ function setup(webContents) {
       // Retrieve saved persistentId : avoid receiving all already received notifications on start
       const persistentIds = config.get('persistentIds') || [];
       // Register if no credentials or if senderId has changed
-      if (!credentials || savedSenderId !== senderId) {
-        credentials = await register(senderId);
+      if (!credentials || ((apiKey && appID && projectID) && (apiKey !== savedApiKey && appID !== savedAppID && projectID !== savedProjectID))) {
+        const credentials = await register({ firebase });
         // Save credentials for later use
         config.set('credentials', credentials);
         // Save senderId
-        config.set('senderId', senderId);
+        config.set('senderConfig', typeof config === 'object' ? JSON.stringify({firebase}) : '{}');
         // Notify the renderer process that the FCM token has changed
         webContents.send(TOKEN_UPDATED, credentials.fcm.token);
       }
